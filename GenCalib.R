@@ -1,8 +1,12 @@
-totalSS<-sfc.model("SSTotal.r")
+totalSS<-sfc.model("SSTotal.r") # A steady-state model
 dataCalib<-simulate(totalSS)
 calib<-dataCalib$baseline
 sink("calibration.txt")
-t=2
+t=2 # simulate for two periods
+# If any parameters are added to modelAuto.sfc, they must be here as well and calibrated
+#   Step 1: Set to a certain value to make sure it runs (modelAuto.sfc)
+#   Step 2: Add equation into SSTotal.r
+#   Step 2b: Add variables below -- finds numerical solution & feed into calibration.txt
 cat(paste("uTk=",calib[t,"uTk"],"\n"))
 cat(paste("uTc=",calib[t,"uTc"],"\n"))
 cat(paste("uTi=",calib[t,"uTi"],"\n"))

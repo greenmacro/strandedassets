@@ -1,6 +1,6 @@
 library(PKSFC)
 library(beepr)
-source("GenCalib.R")
+source("GenCalib.R") # Generates calibration.txt built around steady-state model.
 modelLines<-readLines("AllEquations.r")
 calibrationLines<-readLines("calibration.txt")
 indexCalib<-grep("CALIBRATION",modelLines)
@@ -37,12 +37,14 @@ values<-list(
 	c(1,0.2,0.12),
 	c(1,0.5,0.12)
 )
-for(i in 1:(length(values)-1)){
+#for(i in 1:(length(values)-1)){
+# While testing, only 4 scenarios
+for(i in 1:4){
 	WholeModel<-sfc.addScenario(model=WholeModel,vars=vars,values=list(values[[i]]),inits=2,ends=500)
 }
 
 #plot_graph_hierarchy(WholeModel,main="Stranded Assets")
-datatest<-simulate(WholeModel)
+datatest<-simulate(WholeModel) # A list with dataframes, one for each scenario
 beep()
 
 # for(i in 1:length(WholeModel$blocks)){
@@ -73,9 +75,25 @@ beep()
 
 #REAL OUTPUT
 
+# Four-scenario display
 toplot<-c("yc","yk","yi")
 filename<-"output_1.png"
-listscen=c(1:9)
+listscen=c(1:4) # These scenarios
+jpeg(filename=filename,width=1440,height=960,pointsize = 20)
+layout(matrix(c(1:4),2,2,byrow = T))
+layout.show(4)
+for(i in listscen){
+	results<-as.data.frame(datatest[[i]])
+	matplot(results[,toplot],type="l",lwd=2,lty=1,main=paste("Scenario",(i-1),"- (",paste(values[[i]],collapse=','),")"),ylab="",ylim=c(0,max(results[,toplot],na.rm=T)))
+	abline(v=which(results$exitk==1)[1])
+	grid()
+}
+dev.off()
+
+# Nine-scenario display
+toplot<-c("yc","yk","yi")
+filename<-"output_1.png"
+listscen=c(1:9) # These scenarios
 jpeg(filename=filename,width=1440,height=960,pointsize = 20)
 layout(matrix(c(1:9),3,3,byrow = T))
 layout.show(9)
