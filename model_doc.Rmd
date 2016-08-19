@@ -46,10 +46,12 @@ Investors exit the conventional capital goods sector as soon as either: a) produ
 exitk=ifelse(exitk(-1)==1,1,ifelse(yk==0|Fk<0,1,0))
 ```
 
-**There is a further time, not clear to me, after which there appears to be a new type of money holding**, $M_i$.
+**There is a further time, not clear to me, after which there appears to be a new type of money holding**, $M_i$. 
 ```{r eval=FALSE}
 entry = 20
 ```
+
+AG: This is the number of period after which the innovative sectors enters the financial market. The idea is that at first, the innovative sector is too small to attract financial flows but once it has grown enough, it tries to rise funds via an IPO. In the original paper, we've played with that parameter and shown that if the innovators try to enter the financial market too soon it hurts them because they can't raise enough money via the IPO and thus are over indebted. The $M_i$ is the stock of cash that innovators hold after the IPO and which is used to reduce the quantity of loans or pay dividends.
 
 The loan period is given by `nLoans`,
 ```{r eval=FALSE}
@@ -276,6 +278,8 @@ cc1=(cc0+abs(cc0))/2
 ```
 (**Does that make sense? They must have some minimal level of consumption, and if this is their only source of income then they have to go further into debt to pay for it**)
 
+AG: I think we're not worried about the case where consumption is above income but rather the case when consumption is negative because of negative expected income (this happens when the non-performin loans of the conventional sector is accounted for in the dividends from banks). We could change that set of equation to distinguish between income and capital loss.
+
 It is possible that planned consumption exceeds the capacity of the economy to produce consumption goods. Denote capital productivity of conventional capital goods by $\kappa_k$ (in the code it is `prk`) and innovative capital goods by $\kappa_i$ (`pri` in the code). Then, denoting real capital stocks $k_c$ and $i_c$ in the consumption goods sector, real output of consumption goods $c_s$ from the previous period is
 $$c_s = k_{c,-1}\kappa_k + i_{c,-1}\kappa_i$$
 Excess production of consumption goods over planned consumption is $x_1$ (`exc1` in the code),
@@ -353,6 +357,8 @@ In terms of individual sectors, capital gains are given by the terms in the sum 
 
 **Isn't this a bit contradictary? E.g., shouldn't CG be the sum of CGc, CGk, and CGi?**
 
+AG: It is the case right now, but the equations could be simplified.
+
 ```{r eval=FALSE}
 CGc=ec(-1)*(pce-pce(-1))
 CGk=ifelse(yk!=0,ek(-1)*(pke-pke(-1)),0)
@@ -400,6 +406,8 @@ $$M_c = V_c - V_{ec} \left(+ M_c^{D,f}\right)$$
 ```{r eval=FALSE}
 Mc=McDf+Vc -Vec
 ```
+
+AG: There are no pensions in the system. Regarding money holding for capitalists: we assume there's a demand for money steming from consumption purposes, a demand of money steming from the portfolio equation and finaly the money held in the end depends on capital gains, expectations, etc. because money is the buffer stock.
 
 # I GOT THIS FAR
 ```{r eval=FALSE}
