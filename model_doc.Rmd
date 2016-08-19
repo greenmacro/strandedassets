@@ -46,14 +46,12 @@ Investors exit the conventional capital goods sector as soon as either: a) produ
 exitk=ifelse(exitk(-1)==1,1,ifelse(yk==0|Fk<0,1,0))
 ```
 
-**There is a further time, not clear to me, after which there appears to be a new type of money holding**, $M_i$. 
+The innovative sector enters the financial market after a delay ``entry`` because it is assumed to be too small initially to attract financial flows. Once it has grown enough, firms producing innovative capital goods try to rise funds via an IPO. Model experiments have shown that if the innovators try to enter the financial market too soon it hurts them because they can't raise enough money via the IPO and thus are over indebted.
 ```{r eval=FALSE}
 entry = 20
 ```
 
-AG: This is the number of period after which the innovative sectors enters the financial market. The idea is that at first, the innovative sector is too small to attract financial flows but once it has grown enough, it tries to rise funds via an IPO. In the original paper, we've played with that parameter and shown that if the innovators try to enter the financial market too soon it hurts them because they can't raise enough money via the IPO and thus are over indebted. The $M_i$ is the stock of cash that innovators hold after the IPO and which is used to reduce the quantity of loans or pay dividends.
-
-The loan period is given by `nLoans`,
+The loan period is given by `nLoans`, referred to in equations below by $n_\text{loans}$,
 ```{r eval=FALSE}
 nLoans 5
 ```
@@ -61,25 +59,12 @@ nLoans 5
 
 # Parameters
 
-Is this labor productivity, $\ell_k$, $\ell_l$?
-```{r eval=FALSE}
-lk= 0.400888222893241 
-li= 0.400888222893241 
-```
-
 ```{r eval=FALSE}
 chi1a= 0.333333333333333 
 chi1= 0.375 
 chi1b= 0.25 
 ```
 
-
-```{r eval=FALSE}
-Omega0= 0.3 
-Omega1= 0.1 
-Omega2= 0.220964898869873 
-Omega3= 0.5 
-```
 
 If $\eta$ is nonzero then historical growth is taken into account when agents form their expectations:
 ```{r eval=FALSE}
@@ -180,22 +165,63 @@ zeta = 0.1
 
 # Model equations
 
-## Wealth
+
+## Labor and wages
+Labor is employed in all three productive sectors. The capital-to-labor ratio for conventional and innovative capital $\ell_k$ and $\ell_l$ (`lk` and `li` in the code) can, in principle, be different, but they are set to the same value in current runs of the model,
 ```{r eval=FALSE}
-Vce=Vc(-1) + YDce - Cc
-Vc=Vc(-1) + (YDc-Cc)
-vc=Vc/pc
-Vw=Vw(-1)+(YDw-Cw)
-vw=Vw/pc
-Vec=pce*ec+pke*ek +pie*ei +McDf
-Vece=Vce-McD
+lk= 0.400888222893241 
+li= 0.400888222893241 
+```
+The general expression for employment $N_y$ in sector $y$ is the sum of utilization times capital stock divided by the capital per labor ratio for both conventional and innovative capital,
+$$N_y = u_{iy}\frac{i_{y,-1}}{\ell_i} + u_{ky}\frac{k_{y,-1}}{\ell_k}$$
+Additional conditions ensure that employment is zero in the innovative sector before it starts producing, while employment is zero in the conventional capital goods sector once it has stopped operations. Also, only conventional capital is ever used in the conventional capital goods sector,
+```{r eval=FALSE}
+Nc=uic*ic(-1)/li + ukc*kc(-1)/lk
+Ni=ifelse(t<=(n+entry)&t>(n+1),ifelse((inii+inci)!=0,uii*ii(-1)/li + uki*ki(-1)/lk,0),0)+ifelse(t>(n+entry),ifelse((inii+inci)!=0,uii*ii(-1)/li+uki*ki(-1)/lk,0),0)
+Nk=ifelse(exitk(-1)!=1&inktot>0,ukk*kk(-1)/lk,0)
+```
+Total employment is the sum of sectoral employment,
+$$N_\text{tot} = N_c + N_i + N_k$$
+```{r eval=FALSE}
+Ntot=Nc+Nk+Ni
 ```
 
-## Wages
+The size of the labor force is set as an exogenous parameter, $LF$,
+```{r eval=FALSE}
+LF = 1000
+```
+The employment rate is then total employment divided by the labor force, $N_\text{tot}/LF$.
+
+Capital productivity of capital type $x$ in sector $y$ is denoted $pr_{yx}$, so labor productivity is the product $pr_{yx}\ell_x$. Average labor productivity in sector $x$, $\overline{pr}^N_x$ (denoted `Aprx` in the code) is then given by real output from the sector, $y_x$, divided by sector employment,
+$$\overline{pr}^N_x = \frac{y_x}{N_x}$$
+After first ensuring that innovative and conventional capital are in use, this is represented in code by
+```{r eval=FALSE}
+Aprc=yc/Nc
+Apri=ifelse(Ni>0,yi/Ni,0.001)
+Aprk=ifelse(exitk(-1)!=1&Nk>0,yk/Nk,0)
+```
+
+In each time period, firms set a target real wage, possibly after negotiations with labor. For sector $x$, this is denoted $\omega^T_x$ (`omegaTx` in the code). The target real wage increases with average labor productivity and the employment ratio. The general equation is
+$$\omega^T_x=\Omega_0 + \Omega_1 \log \overline{pr}^N_x + \Omega_2 \log \frac{N_\text{tot}}{LF}$$
+With a check to ensure that the conventional capital goods sector is still operation, this is represented in code as
+```{r eval=FALSE}
+omegaTc=Omega0+Omega1*log(Aprc)+ Omega2*log(Ntot/LF)
+omegaTk=ifelse(exitk(-1)!=1&Nk>0,Omega0+Omega1*log(Aprk)+Omega2*log(Ntot/LF),0)
+omegaTi=Omega0+Omega1*log(Apri)+Omega2*log(Ntot/LF)
+Omega0= 0.3 
+Omega1= 0.1 
+Omega2= 0.220964898869873 
+```
+[_Note:_ I would think that it would be proportional to the average productivity, more or less, with fluctuations due to the (un)employment rate. E.g., `omegaTx = Aprx * (Omega0 + Omega2 * log(Ntot/LF))`]
+
+The nominal wage is then equal to the nominal wage from the previous period plus a correction based on the gap between the target and the realized real wage. For a general sector $x$, the equation for the real wage $W_x$ is
+$$W_x = W_{x,-1} + \Omega_3\left(\omega^T_{x,-1} - \frac{W_{x,-1}}{p_{x,-1}}\right) $$
+With conditional statements taking into account whether the innovative and conventional capital goods sectors are producing, this is represented in code as
 ```{r eval=FALSE}
 Wc=Wc(-1) + Omega3*(omegaTc(-1) - Wc(-1)/pc(-1))
 Wk=ifelse(exitk(-1)==0,Wk(-1) + Omega3*(omegaTk(-1) - Wk(-1)/pc(-1)),0)
 Wi=ifelse(t<=(n+1),Wk(-1),Wi(-1) + Omega3*(omegaTi(-1) - Wi(-1)/pc(-1)))
+Omega3= 0.5 
 ```
 
 ## Profits and dividends
@@ -224,7 +250,7 @@ nu = 0.25
 
 Dividends are distributed to capitalists from productive sectors and the banking sector. For productive sectors, the basic expression for dividends is profits $F_s$ less autonomous investment $I_s$, as long as the result is positive. For an arbitrary sector $s$,
 $$FD_s = \max\left(F_s - I_s\right)$$
-This is then modified to take into account the introduction of innovative capital, as well as a correction for money holdings after "entry". For that last consideration, if previous period money held by the innovative sector (??), $M_{i,-1}$, plus profits is more than sufficient to pay dividends then they will be paid, otherwise they won't. 
+This is then modified to take into account the introduction of innovative capital, as well as a correction for money holdings after "entry". For that last consideration, if **previous period money held by the innovative sector (??),** $M_{i,-1}$, plus profits is more than sufficient to pay dividends then they will be paid, otherwise they won't. 
 ```{r eval=FALSE}
 FDi=ifelse(t<=(n+entry)&t>(n+1),max(Fi-Ii,0),0)+ifelse(t>(n+entry),ifelse(Ii-Fi-Mi(-1)<=0,max(Fi-Ii,0),0),0)
 FDc=max(Fc-Ic,0)
@@ -276,9 +302,7 @@ $$c_{c1} = \frac{1}{2}\left(c_{c0} + |c_{c0}|\right) = \max\left(0,c_{c0}\right)
 ```{r eval=FALSE}
 cc1=(cc0+abs(cc0))/2
 ```
-(**Does that make sense? They must have some minimal level of consumption, and if this is their only source of income then they have to go further into debt to pay for it**)
-
-AG: I think we're not worried about the case where consumption is above income but rather the case when consumption is negative because of negative expected income (this happens when the non-performin loans of the conventional sector is accounted for in the dividends from banks). We could change that set of equation to distinguish between income and capital loss.
+[_Note:_ This could be modified in future to set a minimum level of consumption equal to some fraction of previous period consumption, for example by setting `cc1=(cc0+fcmin*cc1(-1) + abs(cc0-fcmin*cc1(-1)))/2`. This captures the case in which some capitalists go thoroughly bankrupt and enter the workforce while others go temporarily bankrupt but keep up expenditure and manage to get new loans and yet others continue to consume.]
 
 It is possible that planned consumption exceeds the capacity of the economy to produce consumption goods. Denote capital productivity of conventional capital goods by $\kappa_k$ (in the code it is `prk`) and innovative capital goods by $\kappa_i$ (`pri` in the code). Then, denoting real capital stocks $k_c$ and $i_c$ in the consumption goods sector, real output of consumption goods $c_s$ from the previous period is
 $$c_s = k_{c,-1}\kappa_k + i_{c,-1}\kappa_i$$
@@ -303,6 +327,33 @@ Once real consumption has been calculated, it is converted to nominal values usi
 ```{r eval=FALSE}
 Cw=cw*pc
 Cc=cc*pc
+```
+
+### Wealth
+As noted above, consumption is paid for out of both current income and wealth. For either capitalists or workers (denoted generically by subscript $i$), nominal wealth is given by previous period wealth plus disposable income net of consumption,
+$$V_i = V_{i,-1} + \left(YD_i - C_i\right)$$
+Purchasing power out of wealth is then nominal wealth deflated by the cost of consumption goods,
+$$v_i = \frac{V_i}{p_c}$$
+```{r eval=FALSE}
+Vc=Vc(-1) + (YDc-Cc)
+vc=Vc/pc
+Vw=Vw(-1)+(YDw-Cw)
+vw=Vw/pc
+```
+Capitalists also make investment decisions out of their expected wealth in the next period, which they calculate using the same formula as above, but with expected disposal income,
+$$V_c^e = V_{i,-1} + \left(YD_i^e - C_i\right)$$
+```{r eval=FALSE}
+Vce=Vc(-1) + YDce - Cc
+```
+We further distinguish capitalists' financial wealth $V_{ec}$, equal to the value of equity shares plus money held for financial reasons (as opposed to transactions). Denoting the number of shares in sector $s$ by $e_s$, the equity price by $p_{s,e}$, and money that capitalists wish to hold for financial reasons by $M_c^{D,f}$,
+$$V_{ec} = p_{c,e} e_c + p_{k,e} e_k + p_{i,e} e_i + M_c^{D,f}$$
+```{r eval=FALSE}
+Vec=pce*ec+pke*ek +pie*ei +McDf
+```
+The expected value of financial wealth in the next period is given by the expected value of total wealth less capitalists' desired money holdings for transactions purposes $M_c^D$,
+$$V_{ec}^e = V_c^e - M_c^D$$
+```{r eval=FALSE}
+Vece=Vce-McD
 ```
 
 ### Wage earners' disposable income
@@ -355,9 +406,8 @@ CG = ifelse(ei(-1)==0&ei>0,ec(-1)*(pce-pce(-1))+ek(-1)*(pke-pke(-1)),ec(-1)*(pce
 ```
 In terms of individual sectors, capital gains are given by the terms in the sum above, but with some conditions. For the conventional capital sector, capital gains are zero if real output has gone to zero, while for the innovative sector it is necessary to catch discontinuities when it is first introduced.
 
-**Isn't this a bit contradictary? E.g., shouldn't CG be the sum of CGc, CGk, and CGi?**
+[_Note:_This could be modified in future, because CG can, in principle, differ from the cum of CGc, CGk and CGi.]
 
-AG: It is the case right now, but the equations could be simplified.
 
 ```{r eval=FALSE}
 CGc=ec(-1)*(pce-pce(-1))
@@ -386,75 +436,68 @@ cgie=ifelse(t<(n+1),ifelse(ei(-1)==0|pie(-1)==0,0,(CGie/(ei(-1)*pie(-1)))),0)
 ```
 
 ## Money and banking
-Total money in the system is $M_s$, the sum of money held by wage-earners, $M_w$, capitalists, $M_c$, **and an additional term after "entry"** $M_i$.
+Total money in the system is $M_s$, the sum of money held by wage-earners, $M_w$ and capitalists, $M_c$.  Also, innovators hold a stock $M_i$ of cash after their IPO, which is used to reduce the quantity of loans or pay dividends.
 ```{r eval=FALSE}
 Ms=Mw+Mc+Mi
 ```
-For wage earners, their money holdings constitute their wealth (their money in the bank) (**what about pensions?**),
+
+### Money held by wage earners
+For wage earners, their money holdings constitute their wealth,
 ```{r eval=FALSE}
 Mw=Vw
 ```
+While this may be "money in the bank", banks do not pay interest on the money holdings of wage-earners and do not issue them loans, so wage-earners' money holdings are passive.
+
+### Money held by capitalists
 Capitalists wish to hold money both for transactions (money for consumption, $M_c^D$) and as a store of wealth (money for finance, $M_c^{D,f}$). For transactions purposes, capitalists' desired money holdings are given as a fraction $\beta$ of nominal consumption,
 $$M_c^D = \beta C_c,\>\beta=0.3$$
 ```{r eval=FALSE}
 McD=beta*Cc
 beta = 0.3
 ```
-Actual holdings of cash are given by the difference between nominal wealth $V_c$ and wealth held as equities $V_{ec}$,
-$$M_c = V_c - V_{ec} \left(+ M_c^{D,f}\right)$$
-**Is this equation correct? Why is `McDf` there? It seems like double-counting**
+Actual holdings of cash are given by the difference between nominal wealth $V_c$ and wealth held as non-money equities,
+$$M_c = V_c - \left(V_{ec} - M_c^{D,f}\right) = M_c^{D,f} + V_c - V_{ec}$$
 ```{r eval=FALSE}
 Mc=McDf+Vc -Vec
 ```
+Money held for financial purposes is discussed later in the context of portfolio allocation.
 
-AG: There are no pensions in the system. Regarding money holding for capitalists: we assume there's a demand for money steming from consumption purposes, a demand of money steming from the portfolio equation and finaly the money held in the end depends on capital gains, expectations, etc. because money is the buffer stock.
-
-# I GOT THIS FAR
+### Money held by innovators
+After innovative firms go public, they have a store of cash. Initially they have no cash on hand, and they operate with loans. When they first go public, the value of money holdings in the previous period is then zero, $M_{i,-1} = 0$. When they first go public, they issue 100 shares of new equity, $e_i^s = 100$ at the market's expected price, $p_i^e$. They add to cash holdings from their profits, $F_i$, net of new investment $I_i$ and dividends $FD_i$. The innovative firms put a priority on growth and paying dividends to investors, so from the time they go public onwards, the they use their money for those purposes first,
+$$M_{i,\text{left}} = M_{i,-1} + F_i + e_i^s p_i^e - I_i - FD_i$$
 ```{r eval=FALSE}
-McDf=ifelse(exitk(-1)==1,lambda10*Vece +(lambda11*RRm+lambda12*RRc+lambda13*RRi)*Vece,ifelse(ei==0,lambda10*Vece +(lambda11*RRm+lambda12*RRc+lambda13*RRk)*Vece,lambda10a*Vece +(lambda11a*RRm+lambda12a*RRc+lambda13a*RRk+lambda14a*RRi)*Vece))
 Mileft=Mi(-1)+Fi+esi*pie-Ii-FDi
-Mi=max(Mileft-Li(-1)/nLoans,0)
-
-Vece=Vce-McD
 ```
+They then pay down their loans if they can, by making a regular payment calculated as total outstanding loans $L_i$ from the previous period divided by the loan term $n_\text{loans}$. After that payment, money holdings are
+$$M_i = \max\left(M_{i,\text{left}} - \frac{L_{i,-1}}{n_\text{loans}},0\right)$$
+$$L_i = L_{i-1} - \min\left(\frac{L_{i,-1}}{n_\text{loans}}, M_{i,\text{left}}\right)$$
+```{r eval=FALSE}
+Mi=max(Mileft-Li(-1)/nLoans,0)
+Li=Li(-1)-min(Li(-1)/nLoans,Mileft)
+```
+Note that $M_{i,\text{left}}$ can be negative, or is insufficient to make a full payment, in which case innovative firms take on new loans.
 
 ### Loans
+Loans to the innovative sector are discussed above. For the consumer and conventional capital goods sectors, the basic formula is that loans equal previous period loans, plus investment net of profits (or zero, if profits exceed investment), less the value of new equity issues. For an arbitrary sector $i\in\{c,k\}$,
+$$L_i = L_{i,-1} + \max\left(I_i-F_i,0\right) - e_i^s * p_i^e$$
+Note that the net effect may be either an addition of new loans or a the paying down of prior loans. Also, for the conventional capital goods sector, if output or profits are zero because the innovative sector has superseded it, then there is no demand for loans. These are captured in the following equations:
 ```{r eval=FALSE}
 Lc=Lc(-1)+Ifc-esc*pce
 Lk=ifelse(yk!=0&Fk>=0,Lk(-1)+Ifk-esk*pke,0)
+```
+[_Note:_ This is where to alter the behavior towards dividends. Firms should strive to meet dividend payments.]
+
+The total demand for loans is the sum of loans to each productive sector,
+$$L_d = sum_{i\in\{c,k,i\}} L_i$$
+```{r eval=FALSE}
 Ld=Lc+Lk+Li
-Li=Li(-1)-min(Li(-1)/nLoans,Mileft)
 ```
----
+Banks follow an accomodationist policy in which the demand for loans is automatically supplied (albeit at different rates of interest),
+$$L_s = L_d$$
 
----
-## Labor
-$$N_c\,,N_i\,,N_k$$
-$$N_\text{tot} = N_c + N_i + N_k$$
-```{r eval=FALSE}
-Nc=uic*ic(-1)/li + ukc*kc(-1)/lk
-Ni=ifelse(t<=(n+entry)&t>(n+1),ifelse((inii+inci)!=0,uii*ii(-1)/li + uki*ki(-1)/lk,0),0)+ifelse(t>(n+entry),ifelse((inii+inci)!=0,uii*ii(-1)/li+uki*ki(-1)/lk,0),0)
-Nk=ifelse(exitk(-1)!=1&inktot>0,ukk*kk(-1)/lk,0)
-Ntot=Nc+Nk+Ni
-```
----
 
-## $\Omega$ and related
-```{r eval=FALSE}
-omegaTc=Omega0+Omega1*log(Aprc)+ Omega2*log(Ntot/LF)
-omegaTk=ifelse(exitk(-1)!=1&Nk>0,Omega0+Omega1*log(Aprk)+Omega2*log(Ntot/LF),0)
-omegaTi=Omega0+Omega1*log(Apri)+Omega2*log(Ntot/LF)
-```
+## GOT TO HERE
 
-```{r eval=FALSE}
-Aprc=yc/Nc
-Apri=ifelse(Ni>0,yi/Ni,0.001)
-Aprk=ifelse(exitk(-1)!=1&Nk>0,yk/Nk,0)
-```
-
-```{r eval=FALSE}
-LF = 1000
-```
 
 ## $\Psi$ and related
 ```{r eval=FALSE}
@@ -572,6 +615,10 @@ lambda30=1-lambda20-lambda10
 lambda20a= ifelse(exitk(-1)==0,ifelse(ei==0,0,ifelse(lambda20a(-1)==0,(kc*prk+ic*pri-irrational2*(kk*prk+kc*prk+ic*pri+ii*pri+ki*prk))*(1-lambda10a-irrational3)/(kc*prk+ic*prk+ki*prk+ii*pri+kk*prk+ii*pri+ki*prk),irrational*lambda20a(-1)+(1-irrational)*(kc*prk+ic*pri-irrational2*(kk*prk+kc*prk+ic*pri))*(1-lambda10a-irrational3)/(kc*prk+ic*prk+ki*prk+ii*pri+kk*prk))),0)
 lambda30a= ifelse(exitk(-1)==0,ifelse(ei==0,0,ifelse(lambda30a(-1)==0,(kk*prk+irrational2*(kk*prk+kc*prk+ic*pri+ii*pri+ki*prk))*(1-lambda10a-irrational3)/(kc*prk+ic*prk+ki*prk+ii*pri+kk*prk+ii*pri+ki*prk),irrational*lambda30a(-1)+(1-irrational)*(kk*prk+irrational2*(kk*prk+kc*prk+ic*pri))*(1-lambda10a-irrational3)/(kc*prk+ic*prk+ki*prk+ii*pri+kk*prk))),0)
 lambda40a=1-(lambda20a+lambda30a+lambda10a)
+```
+
+```{r eval=FALSE}
+McDf=ifelse(exitk(-1)==1,lambda10*Vece +(lambda11*RRm+lambda12*RRc+lambda13*RRi)*Vece,ifelse(ei==0,lambda10*Vece +(lambda11*RRm+lambda12*RRc+lambda13*RRk)*Vece,lambda10a*Vece +(lambda11a*RRm+lambda12a*RRc+lambda13a*RRk+lambda14a*RRi)*Vece))
 ```
 
 ## Labor-capital ratio
