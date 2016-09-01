@@ -367,7 +367,7 @@ for(j in 1:length(datatest)){
 	}
 }
 
-filename="param1.png"
+filename="plots/param1.png"
 jpeg(filename=filename,width=1440,height=960,pointsize = 20)
 layout(matrix(c(1:9),3,3,byrow = T))
 layout.show(9)
@@ -382,7 +382,7 @@ plot(shocks$param1,shocks$FinancialCap,xlab="Apathy",ylab="",main="Value Financi
 plot(shocks$param1,shocks$LoansDef,xlab="Apathy",ylab="",main="Non Performing Loans")
 dev.off()
 
-filename="param2.png"
+filename="plots/param2.png"
 jpeg(filename=filename,width=1440,height=960,pointsize = 20)
 layout(matrix(c(1:9),3,3,byrow = T))
 layout.show(9)
@@ -397,7 +397,7 @@ plot(shocks$param2,shocks$FinancialCap,xlab="Information",ylab="",main="Value Fi
 plot(shocks$param2,shocks$LoansDef,xlab="Information",ylab="",main="Non Performing Loans")
 dev.off()
 
-filename="param3.png"
+filename="plots/param3.png"
 jpeg(filename=filename,width=1440,height=960,pointsize = 20)
 layout(matrix(c(1:9),3,3,byrow = T))
 layout.show(9)
