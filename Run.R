@@ -8,35 +8,17 @@ totModel<-c(modelLines[1:(indexCalib-1)],calibrationLines,modelLines[(indexCalib
 writeLines(totModel,"modelAuto.sfc")
 WholeModel<-sfc.model("modelAuto.sfc")
 vars<-list(c("irrational","irrational2","irrational3"))
-values<-list(
-	c(0,0,0.08),
-	c(0,0.2,0.08),
-	c(0,0.5,0.08),
-	c(0,0,0.04),
-	c(0,0.2,0.04),
-	c(0,0.5,0.04),
-	c(0,0,0.12),
-	c(0,0.2,0.12),
-	c(0,0.5,0.12),
-	c(0.5,0,0.08),
-	c(0.5,0.2,0.08),
-	c(0.5,0.5,0.08),
-	c(0.5,0,0.04),
-	c(0.5,0.2,0.04),
-	c(0.5,0.5,0.04),
-	c(0.5,0,0.12),
-	c(0.5,0.2,0.12),
-	c(0.5,0.5,0.12),
-	c(1,0,0.08),
-	c(1,0.2,0.08),
-	c(1,0.5,0.08),
-	c(1,0,0.04),
-	c(1,0.2,0.04),
-	c(1,0.5,0.04),
-	c(1,0,0.12),
-	c(1,0.2,0.12),
-	c(1,0.5,0.12)
-)
+values<-vector("list",11^3)
+counter=1
+for(i in seq(0,1,0.1)){
+	for(j in seq(0,0.5,0.05)){
+		for(k in seq(0.04,0.12,0.008)){
+			values[[counter]]<-c(i,j,k)
+			counter=counter+1;
+		}
+	}
+}
+	
 for(i in 1:(length(values)-1)){
 	WholeModel<-sfc.addScenario(model=WholeModel,vars=vars,values=list(values[[i]]),inits=2,ends=500)
 }
