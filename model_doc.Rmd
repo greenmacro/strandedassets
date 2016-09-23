@@ -36,6 +36,7 @@ $$\hat{x} \equiv \frac{x - x_{-1}}{x_{-1}}$$
 # Time and transition
 Time is tracked by a variable $t$, which increments by one in each time step, for a timeline that extends from 1 to 500 steps,
 ```{r}
+# Equations begin
 t=t(-1)+1
 ```
 
