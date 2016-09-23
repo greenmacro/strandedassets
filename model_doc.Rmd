@@ -127,7 +127,7 @@ Wc=Wc(-1) + Omega3*(omegaTc(-1) - Wc(-1)/pc(-1))
 Wk=ifelse(exitk(-1)==0,Wk(-1) + Omega3*(omegaTk(-1) - Wk(-1)/pc(-1)),0)
 Wi=ifelse(t<=(n+1),Wk(-1),Wi(-1) + Omega3*(omegaTi(-1) - Wi(-1)/pc(-1)))
 ```
-[*NB:* I would feel more comfortable with a more behaviorally-grounded expression. Yes, what workers want is a real wage, and they notice prices But the negotiation is in terms of the nominal wage. Realness enters in two ways -- who shares in any efficiency gains? And is there an adjustment for expected inflation?]
+> **Note:** I would feel more comfortable with a more behaviorally-grounded expression. Yes, what workers want is a real wage, and they notice prices But the negotiation is in terms of the nominal wage. Realness enters in two ways -- who shares in any efficiency gains? And is there an adjustment for expected inflation?
 
 ## Profits and dividends
 The basic profit equation is the value of output, less the wage bill, less payments on loans held in the previous period. For a sector $x$,
@@ -160,7 +160,7 @@ FDi=ifelse(t<=(n+entry)&t>(n+1),max(Fi-Ii,0),0)+ifelse(t>(n+entry),ifelse(Ii-Fi-
 FDc=max(Fc-Ic,0)
 FDk=ifelse(exitk(-1)!=1&inktot>0,max(Fk-Ik,0),0)
 ```
-[*NB:* Alter this for dividend policy.]
+> **Note:** Alter this for dividend policy.
 
 Banks have zero net worth, so they pay out their income from loan repayments as dividends. However, if the conventional capital goods sector goes bankrupt then banks must write off the loans, which is a loss that offsets income from loan payments,
 ```{r}
@@ -275,7 +275,7 @@ CG = ifelse(ei(-1)==0&ei>0,ec(-1)*(pce-pce(-1))+ek(-1)*(pke-pke(-1)),ec(-1)*(pce
 ```
 In terms of individual sectors, capital gains are given by the terms in the sum above, but with some conditions. For the conventional capital sector, capital gains are zero if real output has gone to zero, while for the innovative sector it is necessary to catch discontinuities when it is first introduced.
 
-[*NB:* This could be modified in future, because I think that, as calculated, CG can differ from the sum of CGc, CGk and CGi.]
+> **Note:** This could be modified in future, because I think that, as calculated, CG can differ from the sum of CGc, CGk and CGi.
 
 
 ```{r}
@@ -354,7 +354,7 @@ Note that the net effect may be either an addition of new loans or a paying down
 Lc=Lc(-1)+Ifc-esc*pce
 Lk=ifelse(yk!=0&Fk>=0,Lk(-1)+Ifk-esk*pke,0)
 ```
-[*NB:* This is one place to alter the behavior towards dividends. Firms should strive to meet dividend payments.]
+> **Note:** This is one place to alter the behavior towards dividends. Firms should strive to meet dividend payments.
 
 The total demand for loans is the sum of loans to each productive sector,
 $$L_d = \sum_{x\in\{c,k,i\}} L_x$$
@@ -381,7 +381,7 @@ Ifk=ifelse(exitk(-1)!=1&inktot>0,max(Ik-Fk,0),0)
 Ifi=ifelse(t<=(n+entry)&t>(n+1),max(Ii-Fi,0),0)+ifelse(t>(n+entry),max(Ii-Fi-Mi(-1),0),0)+ifelse(t==(n+1),Ii,0)
 Ifc=max(Ic-Fc,0)
 ```
-[*NB:* Have to modify here also to get a fixed dividend, because the amount available for needed investment should be after dividends.]
+> **Note:** Have to modify here also to get a fixed dividend, because the amount available for needed investment should be after dividends.
 
 The share of investment funded by equity emissions in sector $x$ is denoted by $\Psi_x$, where
 $$\Psi_x = \frac{1}{1 + e^{\psi_x\left(r_x^T - cg_{x,-1} - r_{lx}\right)}} $$
@@ -406,7 +406,7 @@ ec=ec(-1)+esc
 ek=ek(-1)+esk
 ei=ifelse(t<=(n+entry)&t>(n+1),ei(-1)+esi,0)+ifelse(t>(n+entry),ei(-1)+esi,0)
 ```
-[*NB:* So, no repos? That's an increasingly common alternative to dividends.]
+> **Note:** So, no repos? That's an increasingly common alternative to dividends.
 
 ## Retained profits
 Retained profits are calculated as the difference between total profits and dividends as `REk`, `REi`, `REc`,
@@ -461,7 +461,7 @@ gk=ifelse(exitk(-1)==0,eta0k+eta1*uke-eta2*rrlk*lambdakprev+eta3*qkprev,0)
 gi=ifelse(t>n+1,ifelse(t<=(n+entry),tau,eta0k+eta1*uie-eta2*rrli*lambdaiprev+eta3*qiprev),0)
 gc=eta0c+eta1*uce-eta2*rrlc*lambdacprev+eta3*qcprev
 ```
-[*NB:* We could introduce a Minskian element by comparing $\lambda$ to a normal level, which gets looser during a boom.]
+> **Note:** We could introduce a Minskian element by comparing $\lambda$ to a normal level, which gets looser during a boom.
 
 ### Consumption goods sector
 Investment in the consumption goods sector can come from either innovative or conventional capital. Total real gross investment in terms of equivalent output (`invyc` in the model code) is denoted $i^y_{c,\text{tot}}$. It is given as a multiple of prior period real output plus depreciation of the two types of capital (or zero, if that value is negative),
@@ -501,7 +501,7 @@ costk=pk/prk
 costi=pi/pri
 ```
 
-[*NB:* Consider alternative portfolio choices for `z11`. Also, in principle, cost should be discounted cost over the lifetime of capital. Holding productivity and price fixed, then discounting gives rise to the same factor for each type of capital.]
+> **Note:** Consider alternative portfolio choices for `z11`. Also, in principle, cost should be discounted cost over the lifetime of capital. Holding productivity and price fixed, then discounting gives rise to the same factor for each type of capital.
 
 Next, we show some alternatives.
 
@@ -529,7 +529,7 @@ The relevant model equations are
 gkk=ifelse(exitk(-1)==0,gk/prk,0)
 gii=ifelse(firstPeriodInov,0,gi/pri)
 ```
-*NB: gii does not appear in any equations.*
+> **Note:** gii does not appear in any equations.
 
 #### Conventional capital goods sector
 Regardless of its plans, the conventional capital goods sector cannot produce more than it is able to with its existing stock of capital. So, $\kappa_k k_{k,-1}$ sets a floor on its own purchases of conventional capital goods. But it will also not invest more than planned, so (as long as it is positive), $g_{k,k} k_{k,-1} + d(k_k)$ also sets a floor on its own purchases of conventional capital goods. This gives the model expression
@@ -557,7 +557,10 @@ The expression for the price is discussed elsewhere. Production of innovative ca
 $$i_{i,i,+1} = \alpha_{-1}i_{i,k} + \frac{\tau y_i}{\kappa_i}$$
 Substituting this expression into the one for $y_i$, above and solving for first-period investment in conventional capital gives
 $$i_{i,k} = \frac{\kappa_i}{\kappa_k}\frac{s_i}{1 - \tau - \alpha_{-1}(\kappa_i/\kappa_k)} = \frac{\kappa_i}{\kappa_k}\frac{1}{1 - \tau - \alpha_{-1}(\kappa_i/\kappa_k)}\frac{1}{p_i}\frac{\rho Y_{k,-1}}{1-\rho}$$
-*NB: This differs from the equation as currently implemented, but I think the units work out.* Here is the current implementation:
+
+> **Note:** This differs from the equation as currently implemented, but I think the units work out.
+
+Here is the current implementation:
 $$i_{i,i} = 0,\>i_{i,k} = \frac{\rho \kappa_i Y_{k,-1}}{(1-\rho)p_i\kappa_k(\kappa_i - e^{1-n} - \tau)},\text{ first period}$$
 After the initial period, all investment is in innovative capital. The investment function, which says how much the firm wishes to invest, is similar to that for the consumption goods sector, but the sector is constrained by its own production in the previous period, which is $\kappa_i i_{i,-1} + \kappa_k k_{i,-1}$,
 $$i_{i,i} = \min\left[\kappa_i i_{i,-1} + \kappa_k k_{i,-1},\frac{1}{\kappa_i}\max\left(g_i y_{i,-1} + \kappa_k d(k_i) + \kappa_i d(i_i),0\right)\right],\>i_{i,k} = 0,\text{ after first period}$$
@@ -684,7 +687,7 @@ $$(\chi_\text{div},\chi_\text{prof},\chi_\text{gains}) = \left\{\begin{array}{cc
 (\chi_{1a},\chi_{1a},0), & cg_x^e = 0
 \end{array}\right.$$
 
-[*NB:* Should the condition be $cg_x^e \leq 0$?]
+> **Note:** Should the condition be $cg_x^e \leq 0$?
 
 ```{r}
 RRc=ifelse(round(cgce,digit=6)==0,chi1a*((rce+1)/(1+pic)-1)+chi1a*((1+rcge)/(1+pic)-1),(chi1b*((1+cgce)/(1+pic)-1)+chi1*((1+rce)/(1+pic)-1)+chi1*((1+rcge)/(1+pic)-1)))
