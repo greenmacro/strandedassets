@@ -1,7 +1,7 @@
 ---
 title: "Stranded Assets Model Documentation"
-author: "Green Macro Team"
-date: "PUT DATE HERE"
+author: "MFS Green Macro Team"
+date: '`r format(Sys.time(), "%d %B %Y")`'
 output:
   pdf_document:
     toc: yes
@@ -9,6 +9,7 @@ output:
   html_document:
     toc: yes
     toc_depth: 2
+documentclass: article
 ---
 
 ```{r setup, include=FALSE, purl=FALSE}
@@ -55,7 +56,7 @@ The loan period is given by `nLoans`, referred to in equations below by $n_\text
 
 For several variables, expectations are formed through an adaptive process. A common term in each of these expressions takes historical growth into account when anticipating future growth. The historical average growth rate is multiplied by a parameter $\eta$, which is zero if historical growth is ignored when forming expectations and one if future growth is expected to match historical average growth.
 
-# Wealth and Income 
+# Wealth and income 
 
 ## Wealth
 For either capitalists or workers (denoted generically by subscript $i$), nominal wealth is given by previous period wealth plus disposable income net of consumption,
@@ -362,7 +363,7 @@ Ld=Lc+Lk+Li
 Banks follow an accomodationist policy in which the demand for loans is automatically supplied (albeit at different rates of interest),
 $$L_s = L_d$$
 
-# Firm investment plans and capital stock
+# Investment plans and capital stock
 Total nominal investment in sector $x$ is denoted $I_x$. It is equal to real investment in each type of capital ($i_{xk}$ or $i_{xi}$), multiplied by the price,
 $$I_x = p_k i_{xk} + p_i i_{xi}$$
 In the code, $i_{xk}$ is `inxk`, so, ensuring the sector is active, the model equations are
