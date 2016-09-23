@@ -1,7 +1,10 @@
 library(PKSFC)
 library(beepr)
+library(knitr)
 source("GenCalib.R") # Generates calibration.txt built around steady-state model.
-modelLines<-readLines("AllEquations.r")
+# Generate the model equations from the R markdown document
+purl('model_doc.Rmd',documentation=0,output='modeleqns_fromdoc.R')
+modelLines<-readLines("modeleqns_fromdoc.R")
 calibrationLines<-readLines("calibration.txt")
 indexCalib<-grep("CALIBRATION",modelLines)
 totModel<-c(modelLines[1:(indexCalib-1)],calibrationLines,modelLines[(indexCalib+1):length(modelLines)])
