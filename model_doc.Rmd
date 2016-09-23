@@ -1,6 +1,6 @@
 ---
 title: "Stranded Assets Model Documentation"
-author: "MFS Green Macro Team"
+author: "Emanuele Campiglio, Elena Dawkins, Antoine Godin, Eric Kemp-Benedict"
 date: '`r format(Sys.time(), "%d %B %Y")`'
 output:
   pdf_document:
@@ -9,11 +9,12 @@ output:
   html_document:
     toc: yes
     toc_depth: 2
+subtitle: Mistra Financial Services Green Macro Project
 documentclass: article
 ---
 
 ```{r setup, include=FALSE, purl=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval=FALSE)
+knitr::opts_chunk$set(echo = TRUE, eval=FALSE, tidy=TRUE, tidy.opts=list(width.cutoff=80))
 ```
 
 # Introduction
