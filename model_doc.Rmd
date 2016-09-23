@@ -6,10 +6,11 @@ output:
   pdf_document:
     toc: yes
     toc_depth: '2'
+    number_sections: yes
   html_document:
     toc: yes
     toc_depth: 2
-subtitle: Mistra Financial Services Green Macro Project
+subtitle: "Mistra Financial Services Green Macro Project"
 documentclass: article
 ---
 
