@@ -180,5 +180,6 @@ exitk=0
 irrational=0
 irrational2=0
 irrational3=0.08
+irrational4=0
 t=0
 timeline 1 3

@@ -1,3 +1,4 @@
+#Model with a shock to expected capital gains
 #WageIRate
 t=t(-1)+1
 sumkc=pk(-5)*kc(-5)+pi(-5)*ic(-5)+pk(-4)*kc(-4)+pi(-4)*ic(-4)+pk(-3)*kc(-3)+pi(-3)*ic(-3)+pk(-2)*kc(-2)+pi(-2)*ic(-2)+pk(-1)*kc(-1)+pi(-1)*ic(-1)
@@ -126,7 +127,7 @@ Fke=ifelse(exitk(-1)!=1,Fkmean+Fkmean*Fkgr*eta+nu*(Fk(-1)-Fke(-1)),0)
 rkge=ifelse(exitk(-1)!=1,Fke/(ek(-1)*pke(-1)),0)
 FDke=ifelse(exitk(-1)!=1,FDkmean+FDkmean*FDkgr*eta+chi*(FDk(-1)-FDke(-1)),0)
 rke=ifelse(exitk(-1)!=1,FDke/(ek(-1)*pke(-1)),0)
-CGke=ifelse(exitk(-1)!=1,CGkmean+CGkmean*CGkgr*eta+theta*(CGk(-1)-CGke(-1)),0)
+CGke=ifelse(exitk(-1)!=1,ifelse(irrational4>0,-irrational4*pke(-1)*ek(-1),CGkmean+CGkmean*CGkgr*eta+theta*(CGk(-1)-CGke(-1))),0)
 cgke=ifelse(exitk(-1)!=1,CGke/(ek(-1)*pke(-1)),0)
 Fie=Fimean+Fimean*Figr*eta+nu*(Fi(-1)- Fie(-1))
 FDie= FDimean+FDimean*FDigr*eta+chi*(FDi(-1)-FDie(-1))

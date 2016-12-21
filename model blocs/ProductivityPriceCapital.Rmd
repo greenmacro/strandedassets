@@ -1,0 +1,183 @@
+---
+title: 'Capital Price and Productivity: An Appraisal of the Energy Market'
+author: "Emanuele Campiglio, Elena Dawkins, Antoine Godin, Eric Kemp-Benedict"
+date: '`r format(Sys.time(), "%d %B %Y")`'
+output: pdf_document
+---
+
+```{r setup, include=FALSE, purl=FALSE}
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, tidy=TRUE,message=F,warning=F, tidy.opts=list(width.cutoff=75))
+```
+
+#Introduction
+
+```{r,echo=FALSE}
+library(plotrix)
+
+#Loading up the data
+energyData<-as.data.frame(read.csv("Data Energy/Dataset.csv"))
+
+hpfilter <- function(x,lambda=6.25){ 
+	eye <- diag(length(x)) 
+	result <- solve(eye+lambda*crossprod(diff(eye,lag=1,d=2)),x) 
+	return(result) 
+} 
+
+predHP<-function(xHP){
+	predx<-2*xHP[length(xHP)]-xHP[length(xHP)-1]
+	return(predx)
+}
+
+buildHPSeries <- function(x){
+	indexes<-which(!is.na(x),arr.ind=TRUE)
+	if(length(indexes)<=10){
+		stop("Trying to build a trended HP series with less than 10 observations")
+	}
+	lastIndex<-max(indexes)
+	result=matrix(nrow=1,ncol=length(x))
+	for(i in 1:lastIndex){
+		result[indexes[i]]<-x[indexes[i]]
+	}
+	for(i in (lastIndex+1):length(x)){
+		xHP<-hpfilter(result[1:(i-1)])
+		result[i]<-predHP(xHP)
+	}
+	return(result)	
+}
+```
+
+
+## Capacity Factors
+
+Capacity Factors represent the percentage of the time a specific production unit is available to produce electricity. Renewable energy producers usually have a lower capacity factor. The following table highlights this.
+
+|Technology|Capacity Factor (%)|
+|:--------:|:-----------------:|
+|Coal|85|
+|Gas|87|
+|Nuclear|90|
+|Geothermal|90|
+|Solar|25|
+|Wind|25|
+|Tidal|35|
+
+Given the increased share of non-geothermal sources of energy in the group of renewable sources of energy, the average capacity factor of that group is decreasing through time. This is highlighted by the following two graphs. This is the share of each type of renewable technology inn total renewable output.
+
+```{r,echo=FALSE}
+#create proportions table
+prop_table <- prop.table(as.matrix(energyData[,c("output_geo","output_sol","output_tidal","output_wind")]),1)
+#draw chart
+stackpoly(100*prop_table,stack=T,xaxlab=energyData$year)
+#add legend
+legend("topright",c("Geothermal","Solar","Tidal","Wind"),fill=rainbow(dim(prop_table)[2]),bty='n')
+```
+
+Now using the capacity factor described here above, we get the following aggregate capacity factor for the renewable sector as a whole:
+
+```{r,echo=FALSE}
+#Compute average Capacity factor
+energyData$ren_capfac = (energyData$output_geo*0.9+energyData$output_sol*0.25+energyData$output_tidal*0.35+energyData$output_wind*0.25)/energyData$output_eg
+#Plot the chart
+plot(energyData$year,100*energyData$ren_capfac,type='l',col=1,xlab = "",ylab="%",main="Renewable Energy Sector Capacity Factor",lwd=2)
+grid()
+```
+
+## Pricing of capacity
+
+The following graph shows the evolution of capacity prices in USD per installed kW (there are a lot of extrapolation given we have only two data points in 1998 and 2012.
+> We need to fix this
+
+```{r, echo=FALSE}
+matplot(energyData$year,energyData[,c("p_g","p_k")],col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="USD/Kw",type='l')
+grid()
+legend("topright",legend=c("Renewable Price","Traditional Price"),lwd=2,lty=c(1,1),col=c(1,2),bty='n')
+```
+
+## Combined pricing-capacity factors
+
+If we combine the two dynamics (capacity factor and pricing), we get the combined available capacity per USD (indexed, 2010 = 100):
+
+```{r, echo=FALSE}
+energyData$ren_capfac_price = energyData$ren_capfac/energyData$p_g
+energyData$brown_capfac = 0.85
+energyData$brown_capfac_price = energyData$brown_capfac/energyData$p_k
+energyData$ren_capfac_price_index = 100*energyData$ren_capfac_price/energyData$ren_capfac_price[16]
+energyData$brown_capfac_price_index = 100*energyData$brown_capfac_price/energyData$brown_capfac_price[16]
+matplot(energyData$year,energyData[,c("ren_capfac_price_index","brown_capfac_price_index")],col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="Kw/USD Index (2010 = 100)",type='l')
+grid()
+legend("topleft",legend=c("Renewable","Traditional"),lwd=2,lty=c(1,1),col=c(1,2),bty='n')
+```
+
+We see that recently the available output per USD has increased drastically in the renewable sector (hence the decrease in price has more than compensated the aggregate decline in capacity factor). The overall increase in the traditional/brown sector has been more sustained (data are to be treated cautiously, there are not many observation points and I've assumed a constant capacity factor).
+
+## Forecasting
+
+If we are to believe that by 2050, price per kW are the following: USD 2000 for green and USD 1000 for brown, the we have the following dynamics (using hp filters and linear trends and minimum capacity factor of 25% in the green sector).
+
+```{r, echo=FALSE}
+forecastData<-energyData[,c("year","output_geo","output_sol","output_tidal","output_wind","brown_capfac","p_g","p_k")]
+forecastData<-rbind(forecastData,matrix(nrow=38,ncol=8,dimnames = list(NULL,colnames(forecastData))))
+forecastData$year<-1995:2050
+forecastData$brown_capfac = 0.85
+forecastData$output_geo<-t(buildHPSeries(forecastData$output_geo))
+forecastData$output_sol<-t(buildHPSeries(forecastData$output_sol))
+forecastData$output_tidal<-t(buildHPSeries(forecastData$output_tidal))
+forecastData$output_wind<-t(buildHPSeries(forecastData$output_wind))
+forecastData$output_eg<-forecastData$output_geo+forecastData$output_sol+forecastData$output_wind+forecastData$output_tidal
+forecastData$ren_capfac = (forecastData$output_geo*0.9+forecastData$output_sol*0.25+forecastData$output_tidal*0.35+forecastData$output_wind*0.25)/forecastData$output_eg
+forecastData$p_g[18:56]<-seq(from=3500, to=2000,length.out=(56-17))
+forecastData$p_k[18:56]<-seq(from=1500, to=1000,length.out=(56-17))
+forecastData$ren_capfac_price = forecastData$ren_capfac/forecastData$p_g
+forecastData$brown_capfac_price = forecastData$brown_capfac/forecastData$p_k
+forecastData$ren_capfac_price_index = 100*forecastData$ren_capfac_price/forecastData$ren_capfac_price[16]
+forecastData$brown_capfac_price_index = 100*forecastData$brown_capfac_price/forecastData$brown_capfac_price[16]
+matplot(forecastData$year,forecastData[,c("ren_capfac_price_index","brown_capfac_price_index")],col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="Kw/USD Index (2010 = 100)",type='l')
+grid()
+legend("topleft",legend=c("Renewable","Traditional"),lwd=2,lty=c(1,1),col=c(1,2),bty='n')
+```
+
+And the forecast in levels:
+
+```{r,echo=F}
+matplot(forecastData$year,forecastData[,c("ren_capfac_price","brown_capfac_price")],col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="Kw/USD Index (2010 = 100)",type='l')
+grid()
+legend("topleft",legend=c("Renewable","Traditional"),lwd=2,lty=c(1,1),col=c(1,2),bty='n')
+```
+
+FYI, here are the HP forecast output share by renewable source:
+
+```{r, echo=FALSE}
+#create proportions table
+prop_table <- prop.table(as.matrix(forecastData[,c("output_geo","output_sol","output_tidal","output_wind")]),1)
+#draw chart
+stackpoly(100*prop_table,stack=T,xaxlab=forecastData$year)
+#add legend
+legend("topright",c("Geothermal","Solar","Tidal","Wind"),fill=rainbow(dim(prop_table)[2]),bty='n')
+```
+
+The predicted capacity factor:
+
+```{r, echo=FALSE}
+plot(forecastData$year,100*forecastData$ren_capfac,type='l',col=1,xlab = "",ylab="%",main="Renewable Energy Sector Capacity Factor",lwd=2)
+grid()
+```
+
+And finally the prices:
+ 
+```{r, echo=FALSE}
+matplot(forecastData$year,forecastData[,c("p_g","p_k")],col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="USD/Kw",type='l')
+grid()
+legend("topright",legend=c("Renewable","Traditional"),lwd=2,lty=c(1,1),col=c(1,2),bty='n')
+```
+
+## Capacity Building and Output Share
+
+One final note regards the distinction between capacity building (i.e. installed capacity) and market share (i.e. output share) between green and brown capital. The following graph shows that capacity share has grown faster than market share. 
+
+```{r, echo=FALSE}
+prop_table <- cbind(prop.table(as.matrix(energyData[,c("output_eg","output_eb")]),1),prop.table(as.matrix(energyData[,c("cap_eg","cap_eb")]),1))
+matplot(energyData$year,100*prop_table,col=c(1,1,2,2),lwd=2,lty=c(1,2),xlab="",ylab="%",type='l')
+grid()
+legend(x=1995,y=60,legend=c("Renewable Output Share","Traditional Output Share","Renewable Capacity Share","Traditional Capacity Share"),lwd=2,lty=c(1,2),col=c(1,1,2,2))
+```
+
