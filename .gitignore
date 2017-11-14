@@ -1,15 +1,6 @@
 .Rproj.user
 .Rhistory
-*.RData
+.RData
 .Ruserdata
 EnergyData
 Litterature
-csv*
-plots*
-Archives
-model blocs
-*.pdf
-tex2pdf*
-desktop.ini
-*.png
-*.jpg
