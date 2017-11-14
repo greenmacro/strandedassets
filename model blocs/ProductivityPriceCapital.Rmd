@@ -15,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE, eval=TRUE, tidy=TRUE,message=F,warning=F, tid
 library(plotrix)
 
 #Loading up the data
-energyData<-as.data.frame(read.csv("Data Energy/Dataset.csv"))
+energyData<-as.data.frame(read.csv("../EnergyData/Dataset.csv"))
 
 hpfilter <- function(x,lambda=6.25){ 
 	eye <- diag(length(x)) 
@@ -181,3 +181,275 @@ grid()
 legend(x=1995,y=60,legend=c("Renewable Output Share","Traditional Output Share","Renewable Capacity Share","Traditional Capacity Share"),lwd=2,lty=c(1,2),col=c(1,1,2,2))
 ```
 
+# Proposed calibration
+
+The goal of the procedure is to calibrate the values for $\beta_0$ and $\beta_1$ entering in the investment decision of the consumption sector (see the Investment Decision Document):
+
+The share of investment going to brown ($i^y_{c,k}$) or green capital ($i^y_{c,i}$) is then determined using a linear expenditure system, modified to account for productivities:
+\begin{eqnarray}
+i^y_{c,i} &= \beta \frac{i^y_{c,\text{tot}}}{pr_i}\\
+i^y_{c,k} &= (1-\beta) \frac{i^y_{c,\text{tot}}}{pr_k}
+\end{eqnarray}
+
+The preference parameter ($\beta$) is endogenous and determined depending on the relative total unit costs:
+$$\beta = \frac{1}{e^{\beta_0+\beta_1 \frac{tuc_{k,c}-tuc_{i,c}}{tuc_{k,c}}}}$$
+
+## Price differential
+
+If we assume away the difference in capacity factor (and hence the productivity differential for each installed Kw per type of capital), lifetime, and labor-capital ratio, and if we assume that all the investment done in capaciy installation has been done by the consumption sector, we then have that the total unit cost difference boils down to a price difference: $tuc_{x,c} = \frac{W_c}{pr_x*l_x} + \frac{p_x}{\delta_x*pr_x}$ where $W_c$, $pr_x$, $l_x$, and $\delta_x$ are assumed to be identical for the two types of capital. We now thus have that $\frac{tuc_{k,c}-tuc_{i,c}}{tuc_{k,c}} = \frac{p_{k}-p_{i}}{p_{k}}$. This is how it looks like in the data:
+
+
+```{r, echo=FALSE}
+energyData$priceDiff <- (energyData$p_k-energyData$p_g)/energyData$p_k
+matplot(energyData$year,100*energyData$priceDiff,col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="USD/Kw",type='l')
+grid()
+legend("topleft",legend=c("Price Differential (%)"),lwd=2,lty=c(1,1),col=c(1,2),bty='n')
+```
+
+## Investment share calibration
+
+In order to be able to calibrate, we also need to look at the investment share for each type of capital. This can be computed by looking at the difference in installed capacity of each type of capital:
+
+```{r, echo=FALSE}
+energyData$inv_g<-c(0,(energyData$cap_eg[-1]-energyData$cap_eg[-18]))
+energyData$inv_b<-c(0,(energyData$cap_eb[-1]-energyData$cap_eb[-18]))
+matplot(energyData$year,energyData[,c("inv_g","inv_b")],col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="USD/Kw",type='l')
+grid()
+legend("topright",legend=c("Investment in Renewable","Investment in Traditional"),lwd=2,lty=c(1,1),col=c(1,2),bty='n')
+```
+
+Note that in 2007, there was a negative investmemnt decision while investment in renewable was positive. The corresponding $\beta$ for this investment pattern is the following:
+
+```{r, echo=FALSE}
+energyData$beta <- energyData$inv_g/(energyData$inv_g+energyData$inv_b)
+matplot(energyData$year,100*energyData$beta,col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="USD/Kw",type='l')
+grid()
+legend("topleft",legend=c("Share of renewable investment (%)"),lwd=2,lty=c(1,1),col=c(1,2),bty='n')
+```
+
+Obviously the 2007 point is again an outlier (due to the negative investment in traditional capital).
+
+###Specification 1
+Starting from the $\beta$ euqation here above, we can show that:
+$$log(\frac{1}{\beta}) = log(\beta_0)+\beta_1 \frac{p_{k}-p_{i}}{p_{k}}$$
+
+Before regressing the model, let's have a look at the data:
+
+```{r, echo=FALSE}
+energyData$log1beta<-log(1/energyData$beta)
+layout(matrix(c(1:2),1,2,byrow = T))
+plot(100*energyData$priceDiff,energyData$beta,col=c(1),lwd=2,xlab="price differential (%)",ylab="beta",type='p')
+grid()
+plot(100*energyData$priceDiff,energyData$log1beta,col=c(1),lwd=2,xlab="price differential (%)",ylab="log(1/beta)",type='p')
+grid()
+```
+
+
+It is thus possible to regress that equation, these are the results.
+
+```{r, echo=FALSE}
+energymodel<-lm(log1beta~priceDiff,data=energyData)
+print(summary(energymodel))
+```
+
+The regression line is:
+
+```{r, echo=FALSE}
+energyData$log1betapred<-energyData$beta/energyData$beta*(coef(energymodel)[1]+coef(energymodel)[2]*energyData$priceDiff)
+plot(energyData$year,energyData$log1beta,col=c(1),lwd=2,xlab="",ylab="log(1/beta)",type='p')
+lines(energyData$year,energyData$log1betapred,col=2,lwd=2)
+grid()
+```
+
+Or, transforming everything into the $\beta$ space:
+
+```{r, echo=FALSE}
+energyData$betapred<-energyData$beta/energyData$beta*1/(exp(coef(energymodel)[1]+coef(energymodel)[2]*energyData$priceDiff))
+plot(energyData$year,energyData$beta,col=c(1),lwd=2,xlab="",ylab="beta",type='p')
+lines(energyData$year,energyData$betapred,col=2,lwd=2)
+grid()
+```
+
+Which shows a fairly good fit.The only issue regards the fact that this formulation is not bounded at 1 and indeed if the price differential is at -1 in 2050 (as predicted by most institutes), the share of investment above green capital would be above 1.In fact the maximum differential value it can take is `r -coef(energymodel)[1]/coef(energymodel)[2]`.
+
+###Specification 2
+
+Let's add a slope dummy the first three observations of beta and regress again the equation, these are the results.
+
+```{r, echo=FALSE}
+energyData$log1betamod<-c(NA,NA,NA,NA,NA,NA,NA,NA,energyData$log1beta[9:18])
+energymodel2<-lm(log1betamod~priceDiff,data=energyData)
+print(summary(energymodel2))
+```
+
+The regression line is:
+
+```{r, echo=FALSE}
+energyData$log1betapredmod<-energyData$beta/energyData$beta*(coef(energymodel2)[1]+coef(energymodel2)[2]*energyData$priceDiff)
+plot(energyData$year,energyData$log1beta,col=c(1),lwd=2,xlab="",ylab="log(1/beta)",type='p')
+lines(energyData$year,energyData$log1betapred,col=2,lwd=2)
+lines(energyData$year,energyData$log1betapredmod,col=3,lwd=2)
+grid()
+legend("topright",legend=c("Specification 1","Specification 2"),lwd=2,lty=c(1,1),col=c(2,3),bty='n')
+```
+
+Or, transforming everything into the $\beta$ space:
+
+```{r, echo=FALSE}
+energyData$betapredmod<-energyData$beta/energyData$beta*1/(exp(coef(energymodel2)[1]+coef(energymodel2)[2]*energyData$priceDiff))
+plot(energyData$year,energyData$beta,col=c(1),lwd=2,xlab="",ylab="beta",type='p')
+lines(energyData$year,energyData$betapred,col=2,lwd=2)
+lines(energyData$year,energyData$betapredmod,col=3,lwd=2)
+grid()
+legend("topleft",legend=c("Specification 1","Specification 2"),lwd=2,lty=c(1,1),col=c(2,3),bty='n')
+```
+
+Which improves slightly the fit towards the end of the regressions but still has the same problem, now the maximum value the price differential can take is `r -coef(energymodel2)[1]/coef(energymodel2)[2]`.
+
+###Specification 3
+
+Let's add a slope dummy the first five observations of beta and regress again the equation, these are the results.
+
+```{r, echo=FALSE}
+energyData$priceDiffDum<-energyData$priceDiff*c(rep(1,9),rep(0,9))
+energymodel3<-lm(log1betamod~priceDiff+priceDiffDum,data=energyData)
+print(summary(energymodel3))
+```
+
+The regression line is:
+
+```{r, echo=FALSE}
+energyData$log1betapredmod2<-energyData$beta/energyData$beta*(coef(energymodel3)[1]+coef(energymodel3)[2]*energyData$priceDiff+coef(energymodel3)[3]*energyData$priceDiffDum)
+plot(energyData$year,energyData$log1beta,col=c(1),lwd=2,xlab="",ylab="log(1/beta)",type='p')
+lines(energyData$year,energyData$log1betapred,col=2,lwd=2)
+lines(energyData$year,energyData$log1betapredmod,col=3,lwd=2)
+lines(energyData$year,energyData$log1betapredmod2,col=4,lwd=2)
+grid()
+legend("topright",legend=c("Specification 1","Specification 2","Specification 3"),lwd=2,lty=c(1,1),col=c(2,3,4),bty='n')
+```
+
+Or, transforming everything into the $\beta$ space:
+
+```{r, echo=FALSE}
+energyData$betapredmod2<-energyData$beta/energyData$beta*1/(exp(coef(energymodel3)[1]+coef(energymodel3)[2]*energyData$priceDiff+coef(energymodel3)[3]*energyData$priceDiffDum))
+plot(energyData$year,energyData$beta,col=c(1),lwd=2,xlab="",ylab="beta",type='p')
+lines(energyData$year,energyData$betapred,col=2,lwd=2)
+lines(energyData$year,energyData$betapredmod,col=3,lwd=2)
+lines(energyData$year,energyData$betapredmod2,col=4,lwd=2)
+grid()
+legend("topleft",legend=c("Specification 1","Specification 2","Specification 3"),lwd=2,lty=c(1,1),col=c(2,3,4),bty='n')
+```
+
+Which improves still the fit towards the end of the regressions but still has the same problem, now the maximum value the price differential can take is `r -coef(energymodel3)[1]/coef(energymodel3)[2]`.
+
+I suggest we keep this 3rd specification and max out the value beta can take to 1.
+
+## Pricing calibration
+
+The following graph shows the evolution of capacity prices in USD per installed kW (there are a lot of extrapolation given we have only two data points in 1998 and 2012.
+> We need to fix this
+
+```{r, echo=FALSE}
+matplot(energyData$year,energyData[,c("p_g","p_k")],col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="USD/Kw",type='l')
+grid()
+legend("topright",legend=c("Renewable Price","Traditional Price"),lwd=2,lty=c(1,1),col=c(1,2),bty='n')
+```
+
+
+In order to try to calibrate the pricing parameters, we need to simplify a bit the pricing equations. Prices are set via a target-return markup. Given a markup $\phi_x$ in sector $x$ and smoothed expected unit costs $\text{NUC}_x$, the price is given by
+$$p_x = p_{x,-1} + \zeta*\left[\left(1 + \phi_x\right)*\text{NUC}_x - p_{x,-1}\right]$$
+
+In this economy, unit costs are labor costs, computed as the ratio of the nominal wage bill to total output. If we assume only one type of capital per sector (we are interested to calibrate the prices for both capital producers and we assume away the residuals of the initial investment in brown capital from the green sector), the unit costs equation reduces to $UC_x = \frac{W_x}{pr_x l_x}$ where we can safely assume that wages are constants and equal in each sector and where we assume that the capital productiviy is constant and equal in each sector. We are thus left with the labor to capital ratio that needs to be calibrated. Note that we assume away, for the calibration, the smoothening process of expected unit costs and use instead the actual unit costs.
+
+Markups $\phi_x$ are set to achieve a target return on capital. For sector $x$ this is denoted $r_x^T$ (or `rxT` in the code). The generic expression is $\phi_x = r_x^T \frac{p_{k,-1}k_{x,-1} + p_{i,-1}i_{x,-1}}{\text{NUC}_x y_x^e}$. Again this can be simplified if we assume only one type of capital and a targeted level of utilisation $u^T_x$. We can show that the markup $\phi_x$ is a function of the targeted return rate and the targeted utilisation rate: $\phi_x = frac{r^T_x}{r^T_x+u^T_x}$.
+
+Assuming that these targeted rate of return or utilisation are equal and constant for both sector, we are thus left only with the labor to capital ratio to explain the price movements: $p_x = (1+frac{r^T_x}{r^T_x+u^T_x})\frac{W_x}{pr_x l_x}$. Using the following values for the various parameters, we can then compute the capital to labor ratio that explains the price movement and then determine a calibrated equation to forecast future prices.
+
+|Parameter|Value|
+|:-------:|:---:|
+|$u^T_x$|0.8|
+|$r^T_x$|0.096|
+|$W_x$|10|
+|$pr_x$|0.3|
+
+The following graph show the values for both labor to capital ratios:
+
+```{r, echo=FALSE}
+energyData$uTx<-0.8
+energyData$rTx<-0.096
+energyData$Wx<-10
+energyData$prx<-0.3
+energyData$lk<-(1+energyData$rTx/(energyData$rTx+energyData$uTx))*energyData$Wx/(energyData$prx*energyData$p_k)
+energyData$lg<-(1+energyData$rTx/(energyData$rTx+energyData$uTx))*energyData$Wx/(energyData$prx*energyData$p_g)
+energyData$lggr<-c(NA,(energyData$lg[-1]-energyData$lg[-18])/energyData$lg[-18])
+energyData$lkgr<-c(NA,(energyData$lk[-1]-energyData$lk[-18])/energyData$lk[-18])
+matplot(energyData$year,energyData[,c("lg","lk")],col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="",type='l')
+grid()
+legend("topleft",legend=c("Renewable Labor to Capital ratio","Traditional Labor to Capital ratio"),lwd=2,lty=c(1,1),col=c(1,2),bty='n')
+```
+
+Assuming a constant growth rate (which is not the case), we get:
+
+```{r, echo=F}
+energyData$lgpred<-energyData$lg
+energyData$lkpred<-energyData$lk
+for(i in 2:4){
+	energyData$lgpred[i]=energyData$lgpred[i-1]*(1+mean(energyData$lggr,na.rm=T))
+	energyData$lkpred[i]=energyData$lkpred[i-1]*(1+mean(energyData$lkgr[1:4],na.rm=T))
+}
+for(i in 5:18){
+	energyData$lgpred[i]=energyData$lgpred[i-1]*(1+mean(energyData$lggr,na.rm=T))
+	energyData$lkpred[i]=energyData$lkpred[i-1]*(1+mean(energyData$lkgr[5:18],na.rm=T))
+}
+matplot(energyData$year,energyData[,c("lg","lk")],col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="",type='l')
+lines(energyData$year,energyData$lgpred,col=1,lwd=2,lty=2)
+lines(energyData$year,energyData$lkpred,col=2,lwd=2,lty=2)
+grid()
+legend("topleft",legend=c("Renewable fit","Traditional fit"),lwd=2,lty=c(2,2),col=c(1,2),bty='n')
+```
+
+Now let's look at out of sample data and assuming a structural break in the constant growth:
+
+```{r, echo=FALSE}
+forecastData$uTx<-0.8
+forecastData$rTx<-0.096
+forecastData$Wx<-10
+forecastData$prx<-0.3
+forecastData$lg<-0.3
+forecastData$lk<-(1+forecastData$rTx/(forecastData$rTx+forecastData$uTx))*forecastData$Wx/(forecastData$prx*forecastData$p_k)
+forecastData$lg<-(1+forecastData$rTx/(forecastData$rTx+forecastData$uTx))*forecastData$Wx/(forecastData$prx*forecastData$p_g)
+forecastData$lggr<-c(NA,(forecastData$lg[-1]-forecastData$lg[-56])/forecastData$lg[-56])
+forecastData$lkgr<-c(NA,(forecastData$lk[-1]-forecastData$lk[-56])/forecastData$lk[-56])
+
+forecastData$lgpred<-forecastData$lg
+forecastData$lkpred<-forecastData$lk
+for(i in 2:4){
+	forecastData$lgpred[i]=forecastData$lgpred[i-1]*(1+mean(forecastData$lggr[1:18],na.rm=T))
+	forecastData$lkpred[i]=forecastData$lkpred[i-1]*(1+mean(forecastData$lkgr[1:4],na.rm=T))
+}
+for(i in 5:18){
+	forecastData$lgpred[i]=forecastData$lgpred[i-1]*(1+mean(forecastData$lggr[1:18],na.rm=T))
+	forecastData$lkpred[i]=forecastData$lkpred[i-1]*(1+mean(forecastData$lkgr[5:18],na.rm=T))
+}
+for(i in 19:56){
+	forecastData$lgpred[i]=forecastData$lgpred[i-1]*(1+mean(forecastData$lggr[19:56],na.rm=T))
+	forecastData$lkpred[i]=forecastData$lkpred[i-1]*(1+mean(forecastData$lkgr[19:56],na.rm=T))
+}
+matplot(forecastData$year,forecastData[,c("lg","lk")],col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="",type='l')
+lines(forecastData$year,forecastData$lgpred,col=1,lwd=2,lty=2)
+lines(forecastData$year,forecastData$lkpred,col=2,lwd=2,lty=2)
+grid()
+legend("topleft",legend=c("Renewable fit","Traditional fit"),lwd=2,lty=c(2,2),col=c(1,2),bty='n')
+```
+
+Prices would then be:
+
+```{r, echo=FALSE}
+forecastData$p_gpred = (1+forecastData$rTx/(forecastData$rTx+forecastData$uTx))*forecastData$Wx/(forecastData$prx*forecastData$lgpred)
+forecastData$p_kpred = (1+forecastData$rTx/(forecastData$rTx+forecastData$uTx))*forecastData$Wx/(forecastData$prx*forecastData$lkpred)
+matplot(forecastData$year,forecastData[,c("p_g","p_k")],col=c(1,2),lwd=2,lty=c(1,1),xlab="",ylab="",type='l')
+lines(forecastData$year,forecastData$p_gpred,col=1,lwd=2,lty=2)
+lines(forecastData$year,forecastData$p_kpred,col=2,lwd=2,lty=2)
+grid()
+legend("topright",legend=c("Renewable fit","Traditional fit"),lwd=2,lty=c(2,2),col=c(1,2),bty='n')
+```

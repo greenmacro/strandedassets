@@ -1,0 +1,400 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Phi Scenario Analysis},
+            pdfauthor={Antoine Godin},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{longtable,booktabs}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+  \title{Phi Scenario Analysis}
+  \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+  \author{Antoine Godin}
+  \preauthor{\centering\large\emph}
+  \postauthor{\par}
+  \predate{\centering\large\emph}
+  \postdate{\par}
+  \date{30 January 2017}
+
+
+\begin{document}
+\maketitle
+
+\section{Sensitivity Analysis}\label{sensitivity-analysis}
+
+We are here in the case of a sensitivity analysis on both parameters,
+using the latin hypercube {[}TODO: add stuff about that, reference to
+Salle and Yildigluzu{]}. We run 33 models, using the design experiment
+within domain space \(D:\theta \in [0,0.4] \times \phi [0.04]\). The
+parameters tested can be found in appendix.
+
+This section analyses the effect of the two parameters on the following
+set of indicators which relates to the outcome of the transition:
+
+\begin{itemize}
+\tightlist
+\item
+  \emph{exit period}: how long before the high-carbon sector exits the
+  market
+\item
+  \emph{real stranded assets}: value of the capital stock owned by the
+  high-carbon sector in the period before the exit period
+\item
+  \emph{financial stranded assets}: market capitalisation of the
+  high-carbon capital sector in the period before the exit period
+\item
+  \emph{output volatility}: defined as the sum of the coefficient of
+  variation of each of the three sector real output
+\end{itemize}
+
+We use one lag values for the stranded asset because the exit period
+might be triggered by three different conditions: non-postive profit in
+the high-carbon sector, non-positive output in the high-carbon sector or
+non-positive price of high-carbon equity.
+
+Most of the sensitivity graphs (see hereunder) show that: 1. the apathy
+parameter dominates the effect of the blindness parameter for all the
+parameters but for the volatility indicator 2. that the larger the value
+of the \(\theta\) parameter, the longer the transition lasts (up to the
+point where values of \(\theta\) above 0.4 lead to no transition at all)
+and the more stranded assets there are, and 3. that there are non-linear
+effects emerging both along the values of the apathy parameter and along
+combined values of the two parameters.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{plots/final/exitPeriod.png}
+\caption{Exit Period}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{plots/final/PhysicalStranded.png}
+\caption{Real Stranded Assets}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{plots/final/FinancialCapitalisation.png}
+\caption{Financial Stranded Assets}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{plots/final/OutputVolatility.png}
+\caption{Output Volatility}
+\end{figure}
+
+In this domain exploration, 6 scenarios lead to no transition at all.
+This will be at the center of the analysis of the next section. It is
+worth noting that \(\theta\) is not the only explanatory factor as the
+combination of specific values of the two parameters might lead to
+transition or no transition for values that are similar. This indicates
+that there are path dependency impacts and knife-edge dynamics at work.
+The specific impact of the blindness parameter, for a given level of
+apathy will be analysed in a following section.
+
+Non linear impacts of the apathy parameter seem to start for value
+larger than \(0.1\). This is confirmed by a sensitivity analysis (not
+shown) over the domain \((\theta,\phi)\in [0,0.1]\) which shows linear
+relationship for all indicator but the volatility one.
+
+The analysis hereunder will show that the non-linear behaviours is due
+to stock effects arising from financial apathy and blindness. In a
+nutshell, the portfolio specification leads to re-allocation between
+low-carbon and high-carbon sectors but also between capital and
+consumption sectors. This in turn triggers non-trivial impacts on
+investment, employment and hence total output, but also to the relative
+size of each sector. Each of the two recession phases (when the
+low-carbon ermerges in the capital good market and when it enters the
+financial market) have more or less pronounced effect depending on these
+relative sectorial size. In certain cases, the economy settles into low
+capital stock regime (due to the growth function), implying an already
+deflated capital stock into the high-carbon sector, which leads to a
+smoother transition.
+
+\subsection{The case of no transition}\label{the-case-of-no-transition}
+
+This analysis compare the dynamics of the baseline scenario
+(\(\theta=0, \,\phi=0\)) with a case of no transition
+(\(\theta=0.35, \, \phi=0.175\))
+
+As soon as the low-carbon sector enters the capital good market (period
+21), it starts eating market share to the high-carbon sector. By doing
+so, it impacts the high-carbon sector growth rate which should trigger a
+re-allocation from the high-carbon sector equities towards the
+consumption sector ones. With more apathetic and blinder financial
+investor, this does no happen. They give indeed more weight to what they
+think should be the level of capital stock in the high-carbon sector and
+hence inflate or deflate the expected present value of the high-carbon
+capital stock, leading to a different prices of equity for the
+high-carbon sector \emph{and for the consumption sector}. Indeed, the
+low-carbon sector is not present on the financial market yet, but
+financial investor already start favouring the high-carbon sector due to
+their apathy and blindness.
+
+This leads to different growth rate in each sector, leading to different
+investment decision. Overall, the impact is positive in terms of output,
+employment and labor income. This dyanmic is reinforced as the observed
+growth rates feed into the financial appreciation of potential value for
+capital stocks. Furthermore, higher labor income leads to increased
+consumption and reverts the initial negative impact on the consumption
+sector.
+
+Once this happens, the expected growth rate in the consumption sector
+takes over the expected growth rates in the high-carbon capital scetor
+and we observe a reversal of the trends due to financial re-allocation
+of funds: reduced (and eventually negative) growth in the capital
+sector, decrease in output and employment. Note that this has no effect
+on the low-carbon sector.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{plots/final/NoTransitionGDP.png}
+\caption{GDP Components}
+\end{figure}
+
+The effect on the capital stock are more striking, more blindness leaves
+the economy with a lower capital stock in the high-carbon sector and in
+the consumption sector, as a result of the dynamics we described
+hereabove.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{plots/final/NoTransitionKstock.png}
+\caption{GDP Components}
+\end{figure}
+
+The Initial Public Offering (IPO, in period 41) of the low-carbon sector
+creates an important disruption to the financial market as part of the
+existing welath is removed from the two existing sectors to be allocated
+to the low-carbon sector. This leads to movements in equity prices,
+changes in Tobin's q values, wealth loss, consumption effect and growth
+effects.
+
+Blinder and more apathetic financial investors imply behaviours such
+that part of the low-carbon growth is transfered to the capital good
+sector, leading to a much smaller shock (20\% lower) to both the
+high-carbon capital sector \emph{and the consumption sector}. Indeed as
+the expected present value of the low-carbon sector decreases, leading
+to an increase of the high-carbon sector, the expected present value of
+the consumption sector's capital stock remains proportionally higher.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{plots/final/NoTransitionMarketCap.png}
+\caption{GDP Components}
+\end{figure}
+
+This also implies a much higher financial wealth and thus higher
+consumption. We thus observe a much milder recession after the IPO. The
+combination of the portfolio re-allocation and higher levels of GDP
+leads to a situation where the low-carbon sector doesn't grow as fast in
+the non-transition scenario as in the baseline case. On the other hand
+the high-carbon and consumption sector grow much faster.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{plots/final/NoTransitionGDP2.png}
+\caption{GDP Components}
+\end{figure}
+
+\section{High-carbon bubble scenario}\label{high-carbon-bubble-scenario}
+
+We now turn to the case of different blindness (i.e.~different \(\phi\))
+but identical apathy (same \(\theta=0.2\)). We compare scenario 34
+(transition with a small High-Carbon bubble, \(\phi=1\)) and scenario 27
+(transition with a large high-carbon bubble, \(\phi=0.3\)) of the Phi
+sensitivity analysis (33 scenarios combining
+\(\theta \in \left\{0,0.1,0.2\right\}\) and
+\(\phi \in \left\{0,0.1,0.2,...,0.9,1\right\}\)) . The success/fail
+caracteristics regards the existence of a large or small recession at
+the end of the transition, which takes place anyway.
+
+As for the case of the no-transition scenario, the entry of the
+low-carbon sector lead to a re-allocation of financial assets which have
+an impact on the growth rate of consumption and high-carbon sectors. The
+following table shows the difference in expected present value and
+equity price due to higher blindness (positive value implies higher
+value in the blinder, more successful, case).
+
+\begin{longtable}[]{@{}lrrrrrrrrr@{}}
+\toprule
+& iiperc & kk & kkperc & PVyi & PVyk & pke & pce & gk &
+gc\tabularnewline
+\midrule
+\endhead
+22 & 0.00000 & 0.00000 & 0.00000 & -31.72364 & 0.00000 & 0.00000 &
+0.00000 & 0e+00 & 0e+00\tabularnewline
+23 & -0.02070 & 0.00000 & -0.43072 & -0.31724 & -7.03414 & -0.18494 &
+0.09247 & 0e+00 & 0e+00\tabularnewline
+24 & -0.02070 & -0.01312 & 0.79358 & -0.23621 & 13.35820 & 0.34151 &
+-0.17278 & -4e-05 & 1e-05\tabularnewline
+25 & -0.01263 & -0.00434 & 0.61238 & -1.44997 & 9.81262 & 0.35142 &
+-0.14969 & 3e-05 & -1e-05\tabularnewline
+\bottomrule
+\end{longtable}
+
+As in the no-transition scenario analysis, a business cycle emerges as
+the increase in employment leads to increase in consumption, and an
+increase in the consumption sector capital stock. This reverses the
+portfolio allocation towards the consumption sector and leads to a
+decrease in the high-carbon investment strategy. The main difference
+lies in the magnitude of these cycles: blinder financial investor
+actually smooth the business cycle by discounting more of the green
+capital stock and thus over-valuing the high-carbon capital stock. This
+leads to less abrubt fluctuation. This is shown in the following figure
+displyaing the difference in GDP component between the two transitions
+(less blind values minus blinder values) as a percentage of current GDP.
+where we can see that blinder financial investor leads to much smaller
+GDP fluctuation, of the order of magnitue of up to 1\% of GDP.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{plots/final/PhiGDP.png}
+\caption{GDP Components}
+\end{figure}
+
+Again, the effect on the capital stock are striking, more blindness
+leaves the economy with a lower capital stock in the brown sector and a
+slightly higher capital stock in the consumption sector. Overall, the
+economy has a lower stock of capital.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{plots/final/PhiCapstock.png}
+\caption{Physical Capital Stocks}
+\end{figure}
+
+Lower capital stock in the aggregate leads to lower debt level (given
+the targeted leverage level), implying that money holding by households
+is lower, but this is partially compensated by a higher level of total
+market capitalisation.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{plots/final/PhiWealth.png}
+\caption{Type of assets holding in the households sector}
+\end{figure}
+
+Once the green sector enters the financial market, most of the dynamics
+are dominated by the portfolio re-allocation process and its feed-back
+to real dimensions such as growth, employment, consumption and
+investment. The fact that the brown capital sector was already smaller
+means that the shock of the green IPO is relatively lower, leading to a
+phase where total financial wealth is not as depressed as in the
+less-blind scenario. However, this is only transitory as soon the
+reality of real capital stock levels drags down the market
+capitalisation of all firms into level lower in the blinder case.
+
+\begin{figure}[htbp]
+\centering
+\includegraphics{plots/final/PhiMarketCap.png}
+\caption{GDP Components}
+\end{figure}
+
+On the flow side, the situation pre-IPO remain the norm, i.e.~lower
+consumption and overal lower investment in brown capital. The overall
+lower level even leads to lower green investment towards the end of the
+transition.
+
+On the stock space, the level of capital stock remains slightly higher
+in the blinder scenario while the large gap in bropwn capital stock
+slowly disapears (due to lower decrease in capital stock than in the
+less-blind scenario). The observed decrease in green investment
+translates in a lower level of green capital stock.
+
+When the brown sector defaults, the economy is thus in a situation where
+there is less capital stock, less debt and less financial assets in the
+brown capital sector. This imply that the disappearance of the
+high-carbon sector is less of a shock and hence allow for a quicker
+recovery afterwards. The following table shows the relative difference
+(in percentage) between the two scenario (negative value for lower value
+in the blinder scenario)
+
+\begin{longtable}[]{@{}rrr@{}}
+\toprule
+kk & Lk & pke\tabularnewline
+\midrule
+\endhead
+-10.508 & -6.608 & -3.42\tabularnewline
+\bottomrule
+\end{longtable}
+
+The interesting conclusion from this scenario analysis is that, as for
+the no-tranition scenario analysis, pre-IPO dynamics explain most of the
+reason for a difference in the amplitude of shock due to the default of
+the brown sector. The blindness parameter affects at first the
+consumption sector which launch the economy to a path including a lower
+level fo GDP and a lower level of stocks.
+
+
+\end{document}
